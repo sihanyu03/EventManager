@@ -4,13 +4,14 @@
 #include <rapidcsv.h>
 #include "CSVReader.h"
 #include "Database.h"
+#include "Postgres.h"
 
 using json = nlohmann::json;
 
 int main() {
-    Database db;
+    std::unique_ptr<Database> db = std::make_unique<Postgres>();
 
-    if (const std::string db_status = db.get_status(); db_status != "OK") {
+    if (const std::string db_status = db->get_status(); db_status != "OK") {
         std::cout << db_status << std::endl;
         return 1;
     }
@@ -33,7 +34,7 @@ int main() {
 
     bool exists;
     try {
-        exists = db.table_exists(table_name);
+        exists = db->table_exists(table_name);
     } catch (const std::runtime_error& e) {
         std::cout << e.what() << std::endl;
         return 1;
@@ -54,7 +55,7 @@ int main() {
             return 1;
         }
         try {
-            db.create_table(doc.GetColumnNames(), table_name);
+            db->create_table(doc.GetColumnNames(), table_name);
         } catch (const std::runtime_error& e) {
             std::cout << e.what() << std::endl;
             return 1;
@@ -67,7 +68,7 @@ int main() {
         }
 
         try {
-            cols = db.retrieve_cols(doc, table_name);
+            cols = db->retrieve_cols(doc, table_name);
         } catch (const std::runtime_error& e) {
             std::cout << e.what() << std::endl;
             return 1;
@@ -75,12 +76,12 @@ int main() {
     }
 
     try {
-        db.write_rows(doc, cols, table_name);
+        db->write_rows(doc, cols, table_name);
     } catch (const std::runtime_error& e) {
         std::cout << e.what() << std::endl;
     }
 
-    db.commit();
+    db->commit();
 
     std::cout << "Database operation successful" << std::endl;
 

@@ -29,6 +29,8 @@ add_executable(EventManager
         Database.cpp
         CSVReader.h
         CSVReader.cpp
+        Postgres.h
+        Postgres.cpp
 )
 
 target_link_libraries(EventManager PRIVATE rapidcsv)
