@@ -8,19 +8,10 @@
 using json = nlohmann::json;
 
 int main() {
-    std::unordered_map<std::string, std::string> db_details;
-    try {
-        db_details = Database::read_db_details();
-    } catch (const std::invalid_argument &e) {
-        std::cout << e.what() << std::endl;
-        return 1;
-    }
-
     Database db;
-    try {
-        db.generate_transaction(db_details);
-    } catch (const std::runtime_error& e) {
-        std::cout << e.what() << std::endl;
+
+    if (const std::string db_status = db.get_status(); db_status != "OK") {
+        std::cout << db_status << std::endl;
         return 1;
     }
 
@@ -95,4 +86,3 @@ int main() {
 
     return 0;
 }
-

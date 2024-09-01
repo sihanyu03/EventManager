@@ -8,7 +8,19 @@
 
 using json = nlohmann::json;
 
-Database::Database() :tx(nullptr) {}
+Database::Database() {
+    try {
+        std::unordered_map<std::string, std::string> db_details = read_db_details();
+        this->generate_transaction(db_details);
+        this->db_connection_status = "OK";
+    } catch (const std::runtime_error& e) {
+        this->db_connection_status = e.what();
+    }
+}
+
+std::string Database::get_status() const {
+    return this->db_connection_status;
+}
 
 void Database::generate_transaction(std::unordered_map<std::string, std::string>& db_details) {
     const std::string connection_string = "postgresql://" + db_details["user"] + ":" + db_details["password"] +
