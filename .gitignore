@@ -1,3 +1,11 @@
+database_details.json
+email_details.json
+writer/cmake-build-debug
+email_sender/email_sender.log
+email_sender/__pycache__
+.DS_Store
+*.idea
+
 # Prerequisites
 *.d
 
