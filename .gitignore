@@ -1,8 +1,9 @@
 database_details.json
-email_details.json
+email_details*
 writer/cmake-build-debug
 email_sender/email_sender.log
 email_sender/__pycache__
+csv_files
 .DS_Store
 *.idea
 

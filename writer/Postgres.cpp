@@ -57,15 +57,21 @@ bool Postgres::table_exists(const std::string& table_name) const {
     return result[0][0].as<bool>();
 }
 
-void Postgres::create_table(const std::vector<std::string>& cols, const std::string& table_name) const {
+std::string Postgres::create_table(const std::vector<std::string>& cols, const std::string& table_name) const {
     if (cols.empty()) {
         throw std::runtime_error("Error: cannot create a table with no columns");
     }
 
+    std::string email_or_crsid;
     std::string query = "CREATE TABLE " + table_name + "(id SERIAL PRIMARY KEY,";
     for (const std::string& col : cols) {
-        if (col == "crsid") {
-            query += col + " VARCHAR(50) UNIQUE,";
+        if (col == "crsid" || col == "email") {
+            if (email_or_crsid.empty()) {
+                email_or_crsid = col;
+            } else if (col != email_or_crsid) {
+                throw std::runtime_error("Error: CSV file contains both email and crsid columns");
+            }
+            query += "email VARCHAR(50) UNIQUE,";
         } else if (col == "name") {
             query += "first_name VARCHAR(50), last_name VARCHAR(50),";
         } else {
@@ -80,6 +86,8 @@ void Postgres::create_table(const std::vector<std::string>& cols, const std::str
     } catch (const pqxx::sql_error& e) {
         throw std::runtime_error("Error: SQL error when creating table: " + std::string(e.what()));
     }
+
+    return email_or_crsid;
 }
 
 std::vector<std::string> Postgres::retrieve_cols(rapidcsv::Document& doc, const std::string& table_name) const {
@@ -112,7 +120,7 @@ std::vector<std::string> Postgres::retrieve_cols(rapidcsv::Document& doc, const 
     return cols;
 }
 
-void Postgres::write_rows(const rapidcsv::Document& doc, const std::vector<std::string>& cols, const std::string& table_name) const {
+void Postgres::write_rows(const rapidcsv::Document& doc, const std::vector<std::string>& cols, const std::string& table_name, const std::string& email_or_crsid) const {
     std::string query = "INSERT INTO " + table_name + " (";
     for (const std::string& col : cols) {
         if (col != "name") {
@@ -128,9 +136,18 @@ void Postgres::write_rows(const rapidcsv::Document& doc, const std::vector<std::
     for (size_t i {0}; i < num_rows; i++) {
         query += "(";
         for (const auto& col : cols) {
-            const auto val = doc.GetCell<std::string>(col, i);
+            std::string val;
+            if (col == "email" && email_or_crsid == "crsid") {
+                val = doc.GetCell<std::string>("email", i);
+            } else {
+                val = doc.GetCell<std::string>(col, i);
+            }
             if (col != "name") {
-                query += "'" + this->tx->esc(val) + "',";
+                if (col == "crsid") {
+                    query += "'" + this->tx->esc(val) + "@cam.ac.uk',";
+                } else {
+                    query += "'" + this->tx->esc(val) + "',";
+                }
             } else {
                 std::stringstream ss(val);
                 std::string elem;
@@ -155,7 +172,13 @@ void Postgres::write_rows(const rapidcsv::Document& doc, const std::vector<std::
         query += "),";
     }
     query.pop_back();
-    query += " ON CONFLICT (crsid) DO NOTHING;";
+    if (email_or_crsid == "crsid") {
+        query += " ON CONFLICT (crsid) DO NOTHING;";
+    } else if (email_or_crsid == "email") {
+        query += " ON CONFLICT (email) DO NOTHING;";
+    } else {
+        throw std::runtime_error("Error: Email or crsid not found from CSV file");
+    }
 
     try {
         this->tx->exec(query);

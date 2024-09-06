@@ -7,9 +7,9 @@ class Postgres final : public Database {
 public:
     Postgres();
     [[nodiscard]] bool table_exists(const std::string&) const override;
-    void create_table(const std::vector<std::string>&, const std::string&) const override;
+    [[nodiscard]] std::string create_table(const std::vector<std::string>&, const std::string&) const override;
     [[nodiscard]] std::vector<std::string> retrieve_cols(rapidcsv::Document&, const std::string&) const override;
-    void write_rows(const rapidcsv::Document&, const std::vector<std::string>&, const std::string&) const override;
+    void write_rows(const rapidcsv::Document&, const std::vector<std::string>&, const std::string&, const std::string&) const override;
     void commit() const override;
     [[nodiscard]] std::string get_status() const override;
 

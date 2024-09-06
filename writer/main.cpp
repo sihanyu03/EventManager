@@ -49,13 +49,14 @@ int main() {
     }
 
     std::vector<std::string> cols;
+    std::string email_or_crsid;
     if (operation == "create") {
         if (exists) {
             std::cout << "Error: tried to create a table that already exists" << std::endl;
             return 1;
         }
         try {
-            db->create_table(doc.GetColumnNames(), table_name);
+            email_or_crsid = db->create_table(doc.GetColumnNames(), table_name);
         } catch (const std::runtime_error& e) {
             std::cout << e.what() << std::endl;
             return 1;
@@ -76,9 +77,10 @@ int main() {
     }
 
     try {
-        db->write_rows(doc, cols, table_name);
+        db->write_rows(doc, cols, table_name, email_or_crsid);
     } catch (const std::runtime_error& e) {
         std::cout << e.what() << std::endl;
+        return 1;
     }
 
     db->commit();

@@ -36,7 +36,7 @@ class Database:
 
         connection.commit()
 
-        cursor.execute(f'SELECT first_name, crsid FROM {table_name}')
+        cursor.execute(f'SELECT first_name, email FROM {table_name}')
 
         rows = cursor.fetchall()
 
