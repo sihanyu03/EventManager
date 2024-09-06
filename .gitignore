@@ -3,6 +3,7 @@ email_details*
 writer/cmake-build-debug
 email_sender/email_sender.log
 email_sender/__pycache__
+email_sender/events.py
 csv_files
 .DS_Store
 *.idea
