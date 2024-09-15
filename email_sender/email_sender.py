@@ -7,6 +7,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from events import emails
 
 logging.basicConfig(
     filename=os.path.join(os.path.dirname(__file__), 'email_sender.log'),
@@ -17,8 +18,38 @@ logging.basicConfig(
 
 
 class EmailSender:
-    @staticmethod
-    def send_email(event: str, subject: str, recipients: list[Recipient], account, attachment=None) -> None:
+
+    def __init__(self, rows: list[tuple[str, ...]]):
+        """
+        :param rows: Data from the SQL table
+        """
+        self.recipients = []
+        self.rows = rows
+        self.length = len(rows)
+
+    def get_len(self) -> int:
+        """
+        :return: Number of recipients
+        """
+        return self.length
+
+    def fill_recipients(self, event_key: str):
+        """
+        :param event_key: The identifier of the event, the key in the 'events' dictionary
+        :return:
+        """
+        for row in self.rows:
+            first_name = row[0]
+            email = row[1]
+
+            text = emails[event_key]['text'].format(first_name=first_name)
+
+            self.recipients.append(Recipient(
+                email=email,
+                text=text
+            ))
+
+    def send_email(self, event: str, subject: str, account: str, attachment=None) -> None:
         """
         Sends the personalised emails given the subject and the list of recipients
 
@@ -58,7 +89,7 @@ class EmailSender:
             server.starttls()
             server.login(email_details['email'], email_details['password'])
 
-            for recipient in recipients:
+            for recipient in self.recipients:
                 msg = MIMEMultipart()
                 msg['From'] = email_details['email']
                 msg['To'] = recipient.email

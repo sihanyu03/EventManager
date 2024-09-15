@@ -14,9 +14,11 @@ logging.basicConfig(
 
 class Database:
     @staticmethod
-    def get_rows(table_name: str) -> list[tuple[str, ...]]:
+    def get_rows(table_name: str, cols: list[str]) -> list[tuple[str, ...]]:
         """
         :param table_name: Name for the table to retrieve the information
+        :param cols: List of columns that are extracted from the table, in the same order that is configured in
+            email_sender.py
         :return: List of rows, where each row contains the first name and the crsid
         """
         database_details = Database.read_cb_details()
@@ -36,7 +38,7 @@ class Database:
 
         connection.commit()
 
-        cursor.execute(f'SELECT first_name, email FROM {table_name}')
+        cursor.execute(f'SELECT {', '.join(cols)} FROM {table_name}')
 
         rows = cursor.fetchall()
 

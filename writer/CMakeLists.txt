@@ -23,16 +23,15 @@ link_directories(/opt/homebrew/lib)
 include_directories(/opt/homebrew/include)
 
 add_executable(EventManager
-        main.cpp
-        Database.h
-        Database.h
-        Database.cpp
-        CSVReader.h
-        CSVReader.cpp
-        Postgres.h
-        Postgres.cpp
+        src/main.cpp
+        src/Database.cpp
+        src/CSVReader.cpp
+        src/Postgres.cpp
+        src/InputReader.cpp
 )
 
 target_link_libraries(EventManager PRIVATE rapidcsv)
 target_link_libraries(EventManager PRIVATE pqxx)
 target_link_libraries(EventManager PRIVATE nlohmann_json::nlohmann_json)
+
+add_subdirectory(tests)
