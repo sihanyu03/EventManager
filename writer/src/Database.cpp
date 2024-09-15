@@ -1,20 +1,19 @@
 #include <iostream>
 #include <sstream>
-#include "fstream"
+#include <fstream>
 #include <unordered_set>
 #include <unordered_map>
-#include <nlohmann//json.hpp>
+#include <nlohmann/json.hpp>
 #include "Database.h"
 
 using json = nlohmann::json;
 
-std::unordered_map<std::string, std::string> Database::read_db_details() {
-    std::filesystem::path curr_path = std::filesystem::current_path() / ".." / "..";
-    std::filesystem::path db_details_path = curr_path / "database_details.json";
+std::unordered_map<std::string, std::string> Database::read_db_details(const std::string& project_path) {
+    const auto db_details_path {std::filesystem::path(project_path) / "database_details.json"};
 
     std::ifstream file(db_details_path);
     if (!file) {
-        throw std::invalid_argument("Error: failed to read database_details.json. Check that file exists");
+        throw std::invalid_argument("Error: Failed to read database_details.json. Check that file exists");
     }
 
     std::stringstream ss;
@@ -38,7 +37,7 @@ std::unordered_map<std::string, std::string> Database::read_db_details() {
     }
 
     if (db_details_keys != expected_keys) {
-        throw std::invalid_argument("Error: database_details.json format incorrect, program not run");
+        throw std::invalid_argument("Error: 'database_details.json' format incorrect, program not run");
     }
 
     return db_details;
