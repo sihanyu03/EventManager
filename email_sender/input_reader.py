@@ -21,7 +21,7 @@ class InputReader:
 
         account = input(f'Enter the account from which you want to send {available_accounts}: ')
         while account not in available_accounts:
-            print('Invalid input, enter an existing account or add the account details as a json file')
+            print('Invalid input, enter an existing account or add the account details as a yaml file')
             account = input('Enter a valid account: ')
 
         return event_key, account

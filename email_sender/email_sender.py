@@ -2,7 +2,7 @@ from recipient import Recipient
 import logging
 import os
 import sys
-import json
+import yaml
 import smtplib
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -11,20 +11,13 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from events import emails
 
-logging.basicConfig(
-    filename=os.path.join(os.path.dirname(__file__), 'email_sender.log'),
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
-)
-
 
 class EmailSender:
-
-    def __init__(self, rows: list[tuple[str, ...]]):
+    def __init__(self, logger: logging.Logger, rows: list[tuple[str, ...]]):
         """
         :param rows: Data from the SQL table
         """
+        self.logger = logger
         self.recipients = []
         self.rows = rows
         self.length = len(rows)
@@ -62,18 +55,19 @@ class EmailSender:
         :param attachment: Path to the attachment image/logo in the end of the email
         :return:
         """
-        logging.info(f'{event}: Starting email sending process')
+        self.logger.info(f'{event}: Starting email sending process')
 
         try:
             with open(os.path.join(project_path, 'email_details',
-                                   f'email_details_{account}.json'), 'r') as file:
-                email_details = json.load(file)
+                                   f'email_details_{account}.yaml'), 'r') as file:
+                email_details = yaml.safe_load(file)
         except FileNotFoundError:
-            logging.error(f'emails_details_{account}.json file not found, emails not sent')
-            sys.exit('Error, emails not sent. Check logs for more details')
+            error_msg = f'emails_details_{account}.yaml file not found, emails not sent'
+            self.logger.error(error_msg)
+            sys.exit(f'Error: {error_msg}')
 
         if set(email_details.keys()) != {'email', 'password'}:
-            logging.error('Emails not sent, email details reading failed due to invalid format')
+            self.logger.error('Emails not sent, email details reading failed due to invalid format')
             return
 
         def send_one(sender_email, recipient_email, text):
@@ -95,9 +89,9 @@ class EmailSender:
                     msg.attach(img)
 
                 server.sendmail(email_details['email'], recipient_email, msg.as_string())
-                logging.info(f'{event}: Email to {recipient_email} sent successfully')
+                self.logger.info(f'{event}: Email to {recipient_email} sent successfully')
             except Exception as e:
-                logging.error(f'{event}: Failed to send email: {e}')
+                self.logger.error(f'{event}: Failed to send email: {e}')
                 with failed_emails_lock:
                     failed_emails.append(recipient_email)
             finally:
@@ -129,6 +123,4 @@ class EmailSender:
             error_msg = ['Failed to send these emails:']
             for failed_email in failed_emails:
                 error_msg.append('\t' * 12 + failed_email)
-            logging.error('\n'.join(error_msg))
-
-        logging.info(f'{event}: Finished email sending process')
+            self.logger.error('\n'.join(error_msg))

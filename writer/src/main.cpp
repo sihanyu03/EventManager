@@ -1,12 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <nlohmann/json.hpp>
 #include "CSVReader.h"
 #include "Database.h"
 #include "Postgres.h"
 #include "InputReader.h"
 
-using json = nlohmann::json;
 
 int main() {
     // Defining the path of the project where all the required files (CSV files, email details etc.) are located

@@ -32,10 +32,10 @@ TEST_F(CSVReaderTest, successful_test_1) {
 
 TEST_F(CSVReaderTest, duplicate_names) {
     const auto file_name = "test_2.csv";
-    EXPECT_THROW(CSVReader::get_doc(this->project_path, file_name), std::runtime_error);
+    EXPECT_THROW(CSVReader::get_doc(this->project_path, file_name), std::invalid_argument);
 }
 
 TEST_F(CSVReaderTest, duplicate_emails) {
     const auto file_name = "test_3.csv";
-    EXPECT_THROW(CSVReader::get_doc(this->project_path, file_name), std::runtime_error);
+    EXPECT_THROW(CSVReader::get_doc(this->project_path, file_name), std::invalid_argument);
 }

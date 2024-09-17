@@ -2,10 +2,8 @@
 #include <regex>
 #include <unordered_set>
 #include <unordered_map>
-#include <nlohmann//json.hpp>
 #include "Postgres.h"
 
-using json = nlohmann::json;
 
 Postgres::Postgres(const std::string& project_path) {
     try {
@@ -141,14 +139,14 @@ std::string Postgres::get_email(const rapidcsv::Document& doc, const std::unorde
 
 std::string Postgres::get_first_name(const rapidcsv::Document& doc, const std::unordered_set<std::string>& csv_cols_set, const size_t i) {
     if(csv_cols_set.contains("name")) {
-        return get_names(doc, i)[0];
+        return get_names(doc, i)[1];
     }
     return doc.GetCell<std::string>("first_name", i);
 }
 
 std::string Postgres::get_last_name(const rapidcsv::Document& doc, const std::unordered_set<std::string>& csv_cols_set, const size_t i) {
     if (csv_cols_set.contains("name")) {
-        return get_names(doc, i)[1];
+        return get_names(doc, i)[0];
     }
     return doc.GetCell<std::string>("last_name", i);
 }

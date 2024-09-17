@@ -1,39 +1,31 @@
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <unordered_set>
 #include <unordered_map>
-#include <nlohmann/json.hpp>
+#include <yaml-cpp/yaml.h>
 #include "Database.h"
 
-using json = nlohmann::json;
-
 std::unordered_map<std::string, std::string> Database::read_db_details(const std::string& project_path) {
-    const auto db_details_path {std::filesystem::path(project_path) / "database_details.json"};
+    const auto db_details_path {std::filesystem::path(project_path) / "database_details.yaml"};
 
-    std::ifstream file(db_details_path);
-    if (!file) {
-        throw std::invalid_argument("Error: Failed to read database_details.json. Check that file exists");
+    if (!std::ifstream(db_details_path)) {
+        throw std::invalid_argument("Error: Failed to read database_details.yaml. Check that file exists");
     }
 
-    std::stringstream ss;
-    ss << file.rdbuf();
-    file.close();
-
-    json db_details_json;
+    YAML::Node db_details_yaml;
     try {
-        db_details_json = json::parse(ss.str());
-    } catch (const nlohmann::json_abi_v3_11_3::detail::parse_error& e) {
-        throw std::invalid_argument("Error: Failed to parse database_details.json: " + std::string(e.what()));
+        db_details_yaml = YAML::LoadFile(db_details_path);
+    } catch (const std::runtime_error& e) {
+        throw std::invalid_argument("Error: Failed to parse database_details.yaml: " + std::string(e.what()));
     }
 
     std::unordered_set<std::string> expected_keys = {"host", "name", "user", "password"};
     std::unordered_set<std::string> db_details_keys;
     std::unordered_map<std::string, std::string> db_details;
 
-    for (auto it = db_details_json.begin(); it != db_details_json.end(); ++it) {
-        db_details_keys.insert(it.key());
-        db_details[it.key()] = it.value();
+    for (const auto& v : db_details_yaml) {
+        db_details_keys.insert(v.first.as<std::string>());
+        db_details[v.first.as<std::string>()] = v.second.as<std::string>();
     }
 
     if (db_details_keys != expected_keys) {

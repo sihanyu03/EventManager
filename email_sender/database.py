@@ -1,27 +1,23 @@
-import json
+import logging
+
+import yaml
 import os
 import sys
-import logging
 import psycopg2
-
-logging.basicConfig(
-    filename=os.path.join(os.path.dirname(__file__), 'email_sender.log'),
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG
-)
 
 
 class Database:
     @staticmethod
-    def get_rows(table_name: str, cols: list[str]) -> list[tuple[str, ...]]:
+    def get_rows(logger: logging.Logger, project_path: str, table_name: str, cols: list[str]) -> list[tuple[str, ...]]:
         """
+        :param logger: Logger
+        :param project_path: Path of the project directory
         :param table_name: Name for the table to retrieve the information
         :param cols: List of columns that are extracted from the table, in the same order that is configured in
             email_sender.py
         :return: List of rows, where each row contains the first name and the crsid
         """
-        database_details = Database.read_cb_details()
+        database_details = Database.read_db_details(logger, project_path)
 
         try:
             connection = psycopg2.connect(
@@ -31,37 +27,44 @@ class Database:
                 password=database_details['password']
             )
         except psycopg2.OperationalError:
-            logging.error('Connection to database failed, emails not sent')
-            sys.exit('Error, emails not sent. Check logs for more details')
+            error_msg = 'SQL table not found'
+            logger.error(error_msg)
+            sys.exit(f'Error: {error_msg}')
 
         cursor = connection.cursor()
-
-        cursor.execute(f'SELECT {', '.join(cols)} FROM {table_name}')
-
-        rows = cursor.fetchall()
-
-        cursor.close()
-        connection.close()
-
-        return rows
+        try:
+            cursor.execute(f'SELECT {', '.join(cols)} FROM {table_name}')
+            return cursor.fetchall()
+        except psycopg2.errors.UndefinedTable:
+            error_msg = 'Failed to read from database table'
+            logger.error(error_msg)
+            sys.exit(f'Error: {error_msg}')
+        finally:
+            cursor.close()
+            connection.close()
 
     @staticmethod
-    def read_cb_details() -> dict[str, str]:
+    def read_db_details(logger, project_path: str) -> dict[str, str]:
         """
+        :param logger: Logger
+        :param project_path: Path of the project directory
         :return: A dictionary of the database details of host, name, user, and password that are read from
-            database_details.json. If read values are invalid, return False
+            database_details.yaml. If read values are invalid, return False
         """
         try:
-            with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database_details.json'), 'r') as file:
+            with open(os.path.join(project_path, 'database_details.yaml'), 'r') as file:
                 try:
-                    details = json.load(file)
-                except json.decoder.JSONDecodeError:
-                    logging.error('Failed to decode database_details.json as a json file, emails not sent')
-                    sys.exit('Error, emails not sent. Check logs for more details')
+                    details = yaml.safe_load(file)
+                except yaml.YAMLError:
+                    logger.error('Failed to decode database_details.yaml as a yaml file, emails not sent')
+                    sys.exit('Error: Failed to decode database_details.yaml as a yaml file, emails not sent')
         except FileNotFoundError:
-            logging.error("database_details.json file doesn't exist, emails not sent")
-            sys.exit('Error, emails not sent. Check logs for more details')
+            error_msg = "database_details.yaml file doesn't exist, emails not sent"
+            logger.error(error_msg)
+            sys.exit(f'Error: {error_msg}')
         if set(details.keys()) != {'host', 'name', 'user', 'password'}:
-            logging.error('Database reading failed due to invalid format, emails not sent')
-            sys.exit('Error, emails not sent. Check logs for more details')
+            error_msg = 'Database reading failed due to invalid format, emails not sent'
+            logger.error(error_msg)
+            sys.exit(f'Error: {error_msg}')
+
         return details

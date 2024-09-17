@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.28)
-
 set(CMAKE_CXX_STANDARD 20)
 
 project(tests)
@@ -17,23 +16,29 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(rapidcsv)
 
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
-FetchContent_MakeAvailable(json)
+FetchContent_Declare(
+        yaml-cpp
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG master
+)
+FetchContent_MakeAvailable(yaml-cpp)
 
 link_directories(/opt/homebrew/lib)
 include_directories(/opt/homebrew/include)
 
 enable_testing()
+
 add_executable(
         tests
         test_CSVReader.cpp
         ../src/CSVReader.cpp
         ../src/Database.cpp
 )
+
 target_link_libraries(tests GTest::gtest_main)
 target_link_libraries(tests rapidcsv)
-target_link_libraries(tests nlohmann_json::nlohmann_json)
 target_link_libraries(tests pqxx)
+target_link_libraries(tests yaml-cpp::yaml-cpp)
 
 include(GoogleTest)
 gtest_discover_tests(tests)
