@@ -36,8 +36,6 @@ class Database:
 
         cursor = connection.cursor()
 
-        connection.commit()
-
         cursor.execute(f'SELECT {', '.join(cols)} FROM {table_name}')
 
         rows = cursor.fetchall()

@@ -1,5 +1,5 @@
-#include "InputReader.h"
 #include <iostream>
+#include "InputReader.h"
 
 
 Input InputReader::get_input() {
@@ -10,7 +10,7 @@ Input InputReader::get_input() {
     std::cout << "Enter the operation you want to perform (create or update): ";
     std::cin >> operation_str;
     if (operation_str != "create" && operation_str != "update") {
-        throw std::runtime_error("Error: Invalid operation entered, should be 'create' or 'update'");
+        throw std::invalid_argument("Error: Invalid operation entered, should be 'create' or 'update'");
     }
     std::cout << "Enter the name of the table you want to " + operation_str + ": ";
     std::cin >> table_name;

@@ -1,4 +1,5 @@
 from email_sender import EmailSender
+from events import emails
 from recipient import Recipient
 import json
 

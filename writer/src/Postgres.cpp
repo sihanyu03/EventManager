@@ -64,7 +64,7 @@ void Postgres::create_table(const std::vector<std::string>& cols, const std::str
         // If column is "crsid" or "email", mark email as found and ensure it hasn't been already defined
         if (col == "crsid" || col == "email") {
             if (email_found) {
-                throw std::runtime_error("Error: CSV file contains multiple instances of email or crsid or both");
+                throw std::invalid_argument("Error: CSV file contains multiple instances of email or crsid or both");
             }
             email_found = true;
             query += "email VARCHAR(255) UNIQUE,";
@@ -123,6 +123,10 @@ std::vector<std::string> Postgres::get_names(const rapidcsv::Document& doc, cons
             j++;
         }
         ++it;
+    }
+
+    if (names.size() != 2) {
+        throw std::invalid_argument("Error: Column 'name' format wrong, should be 'last_name, first_name'");
     }
 
     return names;

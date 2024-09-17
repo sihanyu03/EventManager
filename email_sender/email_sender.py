@@ -4,6 +4,8 @@ import os
 import sys
 import json
 import smtplib
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
@@ -49,14 +51,13 @@ class EmailSender:
                 text=text
             ))
 
-    def send_email(self, event: str, subject: str, account: str, attachment=None) -> None:
+    def send_email(self, project_path: str, event: str, subject: str, account: str, attachment=None) -> None:
         """
         Sends the personalised emails given the subject and the list of recipients
 
+        :param project_path: Path of the project directory
         :param event: Name of the event, used for logging
         :param subject: Subject of the email
-        :param recipients: List of Recipient object instances. Each Recipient instance contains their email address
-            and personalised message
         :param account: The account that the emails are sent from, e.g. chair, societies
         :param attachment: Path to the attachment image/logo in the end of the email
         :return:
@@ -64,7 +65,7 @@ class EmailSender:
         logging.info(f'{event}: Starting email sending process')
 
         try:
-            with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'email_details',
+            with open(os.path.join(project_path, 'email_details',
                                    f'email_details_{account}.json'), 'r') as file:
                 email_details = json.load(file)
         except FileNotFoundError:
@@ -75,37 +76,59 @@ class EmailSender:
             logging.error('Emails not sent, email details reading failed due to invalid format')
             return
 
-        smtp_server = 'smtp.gmail.com'
-        smtp_port = 587
+        def send_one(sender_email, recipient_email, text):
+            server = None
+            try:
+                smtp_server = 'smtp.gmail.com'  # Gmail's SMTP server address
+                smtp_port = 587
 
-        if attachment is not None:
-            with open(attachment, 'rb') as file:
-                img = MIMEImage(file.read())
-                img.add_header('Content-ID', '<image>')
-                img.add_header('Content-Disposition', 'inline', filename=os.path.basename(attachment))
+                server = smtplib.SMTP(smtp_server, smtp_port)  # Connection to Gmail SMTP server
+                server.starttls()  # Transport layer security, ensures secure communication
+                server.login(email_details['email'], email_details['password'])
 
-        try:
-            server = smtplib.SMTP(smtp_server, smtp_port)
-            server.starttls()
-            server.login(email_details['email'], email_details['password'])
-
-            for recipient in self.recipients:
                 msg = MIMEMultipart()
-                msg['From'] = email_details['email']
-                msg['To'] = recipient.email
+                msg['From'] = sender_email
+                msg['To'] = recipient_email
                 msg['Subject'] = subject
-                msg.attach(MIMEText(recipient.text, 'html'))
+                msg.attach(MIMEText(text, 'html'))
                 if attachment is not None:
                     msg.attach(img)
 
-                server.sendmail(email_details['email'], recipient.email, msg.as_string())
-                logging.info(f'{event}: Email to {recipient.email} sent successfully')
+                server.sendmail(email_details['email'], recipient_email, msg.as_string())
+                logging.info(f'{event}: Email to {recipient_email} sent successfully')
+            except Exception as e:
+                logging.error(f'{event}: Failed to send email: {e}')
+                with failed_emails_lock:
+                    failed_emails.append(recipient_email)
+            finally:
+                if server is not None:
+                    server.quit()
 
-            server.quit()
+        if attachment:
+            with open(os.path.join(project_path, attachment), 'rb') as file:
+                img = MIMEImage(
+                    file.read())  # Use MIMEImage to ensure the image isn't an attachment but is embedded inline
+                img.add_header('Content-ID', '<image>')  # Define the content-id of the image (cid:image)
+                img.add_header('Content-Disposition', 'inline', filename=attachment)  # Display it inline
 
-        except Exception as e:
-            logging.error(f'{event}: Failed to send email: {e}')
-            sys.exit('Error, emails not sent. Check logs for more details')
+        max_workers = 30  # Specify maximum number of threads to prevent thread number becoming too high
+        failed_emails = []  # List of emails that sending failed
+        failed_emails_lock = threading.Lock()  # Create lock to prevent multiple threads accessing failed_emails list at
+        # once
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:  # With block automatically shuts it down after
+            futures = []
+            for recipient in self.recipients:
+                # Execute all emails by adding them to the queue, and adding the returned Future object into 'futures'
+                futures.append(executor.submit(send_one, email_details['email'], recipient.email, recipient.text))
 
-        finally:
-            logging.info(f'{event}: Finished email sending process')
+            for future in futures:
+                future.result()  # Wait until all threads are finished
+
+        # Log failed emails
+        if failed_emails:
+            error_msg = ['Failed to send these emails:']
+            for failed_email in failed_emails:
+                error_msg.append('\t' * 12 + failed_email)
+            logging.error('\n'.join(error_msg))
+
+        logging.info(f'{event}: Finished email sending process')
