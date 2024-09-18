@@ -18,18 +18,18 @@ int main() {
         }
 
         // Get user input
-        const auto [operation, table_name, file_name] {InputReader::get_input()};
+        const auto [operation, event_key] {InputReader::get_input()};
 
-        bool exists {db->table_exists(table_name)};
+        bool exists {db->table_exists(event_key)};
 
         // Get CSV data
-        const auto [doc, csv_cols, csv_cols_set] {CSVReader::get_doc(project_path, file_name)};
+        const auto [doc, csv_cols, csv_cols_set] {CSVReader::get_doc(project_path, event_key)};
 
         if (operation == Operation::Create) {
             if (exists) {
                 throw std::runtime_error("Error: Tried to create a table that already exists");
             }
-            db->create_table(csv_cols, table_name);
+            db->create_table(csv_cols, event_key);
         } else {  // operation == Operation::Update
             if (!exists) {
                 throw std::runtime_error("Error: Tried to update table that doesn't exist");
@@ -37,8 +37,8 @@ int main() {
         }
 
         // Write to database
-        const auto cols = db->retrieve_cols(table_name);
-        db->write_rows(doc, cols, csv_cols_set, table_name);
+        const auto cols = db->retrieve_cols(event_key);
+        db->write_rows(doc, cols, csv_cols_set, event_key);
 
         std::cout << "Database operation successful" << std::endl;
 

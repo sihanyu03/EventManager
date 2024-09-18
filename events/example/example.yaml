@@ -1,0 +1,22 @@
+name: Example event
+email_sender: null
+subject: Example email subject
+attachment: ISC_logo.png
+cols:
+  - first_name
+  - email
+grouping_requirement: null
+body: |
+  <!DOCTYPE html>
+    <html>
+      <body>
+        <p>Dear {first_name},</p>
+        <p>Thank you for signing up to this test event. The location is <b><u>Europe</u></b> and time is 
+        <b><u>Monday 2nd of September</u></b>.</p>
+        <p>Please be there on time.</p>
+        <br>
+        <p>Best Regards,</p>
+        <p>ISC Committee 2024-25</p>
+        <img src="cid:image" width="150">
+      </body>
+    </html>

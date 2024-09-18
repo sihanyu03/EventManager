@@ -6,7 +6,7 @@
 #include "Database.h"
 
 std::unordered_map<std::string, std::string> Database::read_db_details(const std::string& project_path) {
-    const auto db_details_path {std::filesystem::path(project_path) / "database_details.yaml"};
+    const auto db_details_path {std::filesystem::path(project_path) / "database_details"/ "database_details.yaml"};
 
     if (!std::ifstream(db_details_path)) {
         throw std::invalid_argument("Error: Failed to read database_details.yaml. Check that file exists");
@@ -19,7 +19,7 @@ std::unordered_map<std::string, std::string> Database::read_db_details(const std
         throw std::invalid_argument("Error: Failed to parse database_details.yaml: " + std::string(e.what()));
     }
 
-    std::unordered_set<std::string> expected_keys = {"host", "name", "user", "password"};
+    const std::unordered_set<std::string> expected_keys = {"host", "name", "user", "password"};
     std::unordered_set<std::string> db_details_keys;
     std::unordered_map<std::string, std::string> db_details;
 
