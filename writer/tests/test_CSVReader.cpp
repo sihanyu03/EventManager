@@ -14,8 +14,8 @@ private:
 };
 
 TEST_F(CSVReaderTest, successful_test_1) {
-    const auto file_name = "test_1.csv";
-    const auto [doc, csv_cols, csv_cols_set] {CSVReader::get_doc(this->project_path, file_name)};
+    const auto event_key = "test_1";
+    const auto [doc, csv_cols, csv_cols_set] {CSVReader::get_doc(this->project_path, event_key)};
 
     EXPECT_EQ(doc.GetColumnCount(), 3);
     EXPECT_EQ(doc.GetRowCount(), 1);
@@ -31,11 +31,11 @@ TEST_F(CSVReaderTest, successful_test_1) {
 }
 
 TEST_F(CSVReaderTest, duplicate_names) {
-    const auto file_name = "test_2.csv";
-    EXPECT_THROW(CSVReader::get_doc(this->project_path, file_name), std::invalid_argument);
+    const auto event_key = "test_2";
+    EXPECT_THROW(CSVReader::get_doc(this->project_path, event_key), std::invalid_argument);
 }
 
 TEST_F(CSVReaderTest, duplicate_emails) {
-    const auto file_name = "test_3.csv";
-    EXPECT_THROW(CSVReader::get_doc(this->project_path, file_name), std::invalid_argument);
+    const auto event_key = "test_3";
+    EXPECT_THROW(CSVReader::get_doc(this->project_path, event_key), std::invalid_argument);
 }
