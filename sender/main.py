@@ -66,11 +66,14 @@ def main():
 
                         email_sender.send_emails(email_contents=email_contents)
 
+                    num_batches = email_sender.batch_no
+                    num_successful_emails = email_sender.emails_sent
+
             mins, secs = divmod(time() - start_time, 60)
             mins, secs = int(mins), round(secs, 2)
-            batch_suffix = '' if email_sender.batch_no == 1 else 'es'
-            print(f'\nEmails sent in {email_sender.batch_no} batch{batch_suffix}, time taken: {mins} minutes and {secs} seconds')
-            logger.info(f'All batches sent, sent in {email_sender.batch_no} batch{batch_suffix}, time '
+            batch_suffix = '' if num_batches == 1 else 'es'
+            print(f'\nEmails sent in {num_batches} batch{batch_suffix}, time taken: {mins} minutes and {secs} seconds')
+            logger.info(f'{num_successful_emails}/{no_of_emails} emails sent successfully in {num_batches} batch{batch_suffix}, time '
                         f'taken: {mins} minutes and {secs} seconds')
 
         else:

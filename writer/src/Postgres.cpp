@@ -123,7 +123,7 @@ std::vector<std::string> Postgres::get_names(const rapidcsv::Document& doc, cons
         ++it;
     }
 
-    if (names.size() != 2) {
+    if (names.size() < 2) {
         throw std::invalid_argument("Error: Column 'name' format wrong, should be 'last_name, first_name'");
     }
 
