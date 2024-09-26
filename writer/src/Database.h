@@ -36,11 +36,11 @@ public:
      * Write the rows into SQL table
      *
      * @param doc CSF file as a rapidcsv::Document type
-     * @param cb_cols Vector of the columns
+     * @param db_cols Vector of the columns
      * @param csv_cols_set Set of the columns for quick existence checking
      * @param table_name Name of the table
      */
-    virtual void write_rows(const rapidcsv::Document& doc, const std::vector<std::string>& cb_cols, const std::unordered_set<std::string>& csv_cols_set, const std::string& table_name) const = 0;
+    virtual void write_rows(const rapidcsv::Document& doc, const std::vector<std::string>& db_cols, const std::unordered_set<std::string>& csv_cols_set, const std::string& table_name) const = 0;
 
     /**
      * Returns the status of the current connection
