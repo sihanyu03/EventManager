@@ -124,7 +124,10 @@ std::vector<std::string> Postgres::get_names(const rapidcsv::Document& doc, cons
     }
 
     if (names.size() < 2) {
-        throw std::invalid_argument("Error: Column 'name' format wrong, should be 'last_name, first_name'");
+        if (names.size() == 1) {
+            throw std::invalid_argument("Error: Column 'name' format wrong, should be 'last_name, first_name', got '" + names[0] + "' at index " + std::to_string(i));
+        }
+        throw std::invalid_argument("Error: Column 'name' format wrong, should be 'last_name, first_name', got empty string at index " + std::to_string(i));
     }
 
     return names;

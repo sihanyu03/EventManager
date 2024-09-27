@@ -48,5 +48,13 @@ class InputReader:
             print(f'\tAvailable accounts: {', '.join(available_accounts)}')
             account = input('Enter a valid account: ')
 
-        event_details['table_name'] = event_key
+        if 'table_name' not in event_details:
+            event_details['table_name'] = event_key
+        if 'email_sender' not in event_details:
+            event_details['email_sender'] = None
+        if 'grouping_requirement' not in event_details:
+            event_details['grouping_requirement'] = None
+        if 'attachment' not in event_details:
+            event_details['attachment'] = None
+
         return event_details, account

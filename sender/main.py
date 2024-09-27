@@ -1,4 +1,5 @@
 from time import time
+import sys
 from concurrent.futures import ThreadPoolExecutor
 
 from email_sender import EmailSender
@@ -10,7 +11,10 @@ project_path = '/Users/sihanyu/Documents/Programming/Github/EventManager'
 
 
 def main():
-    event_details, account = InputReader.get_input(project_path)
+    try:
+        event_details, account = InputReader.get_input(project_path)
+    except FileNotFoundError as e:
+        sys.exit(str(e))
 
     utils.check_event_details_validity(event_details)
 
