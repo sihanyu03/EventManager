@@ -1,6 +1,5 @@
 name: Example event
-email_sender: null
-subject: Example email subject
+subject: Example event
 attachment: ISC_logo.png
 cols:
   - first_name
@@ -11,10 +10,22 @@ body: |
     <html>
       <body>
         <p>Dear {first_name},</p>
-        <p>Thank you for signing up to this test event. The location is <b><u>Europe</u></b> and time is 
-        <b><u>Monday 2nd of September</u></b>.</p>
-        <p>Please be there on time.</p>
-        <br>
+        <p>We are excited to invite you to the Example Event!</p>
+        <p><b>Event Details:</b></p>
+        <ul>
+          <li><b>Date:</b> October 1st</li>
+          <li><b>Time:</b> 12:00 - 13:00</li>
+          <li><b>Location:</b> Cambridge</li>
+        </ul>
+        <p><b>What to Expect</b></p>
+        <p>Be prepared to an exciting Example Event!</p>
+        <p><b>Getting to the Event: Cambridge</b></b>
+        <ul>
+          <li>First, take the flight to any airport in London</li>
+          <li>Then, take the train to Cambridge</li>
+        </ul>
+        <p>Please let us know if you are unable to attend this event. If you have any questions or need assistance with directions, feel free to reach out.</p>
+        <p>Looking forward to enjoying the event with all of you!</p>
         <p>Best Regards,</p>
         <p>ISC Committee 2024-25</p>
         <img src="cid:image" width="150">

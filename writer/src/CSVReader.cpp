@@ -7,7 +7,7 @@ CSV_data CSVReader::get_doc(const std::string& project_path, const std::string& 
     const auto file_path {std::filesystem::path(project_path) / "events" / event_key / (event_key + ".csv")};
 
     if (!exists(file_path)) {
-        throw std::invalid_argument("Error: CSV file not found. Ensure that a corresponding CSV file named event_key.csv exists in the folder of the event");
+        throw std::invalid_argument("Error: CSV file not found. Ensure that a corresponding CSV file named " + event_key + ".csv exists in the folder of the event");
     }
 
     rapidcsv::Document doc;
