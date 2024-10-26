@@ -3,7 +3,7 @@ from email_content import EmailContent
 from typing import Any
 
 
-def default_getter(data: list[tuple[Any, ...]], cols: list[str], body: str):
+def default_getter(data: list[tuple[Any, ...]], cols: list[str], body: str) -> list[EmailContent]:
     """
     Default email contents list builder. Takes only first_name, and personalises that to the email template
     :param data: Data from SQL table
@@ -178,5 +178,29 @@ def culs_mentorship_scheme(data: list[tuple[Any, ...]], _, body: str) -> list[Em
 
         add_to_email_contents(groups[group_id]['mentor'], curr_body, 'mentor')
         add_to_email_contents(groups[group_id]['mentee'], curr_body, 'mentee')
+
+    return email_contents
+
+
+def jacks_giveaway_mich(data: list[tuple[Any, ...]], cols: list[str], body: str) -> list[EmailContent]:
+    """
+    EmailContent list builder for ISC Jack's giveaway Michelmas
+    :param data: Data from SQL table
+    :param cols: Columns of the SQL data
+    :param body: Email template on which the personalised email will be built on
+    :return: List of the EmailContent objects
+    """
+    email_contents = []
+
+    for row in data:
+        values = {cols[i]: row[i] for i in range(len(cols))}
+        values['scoops'] = 'scoop' if values['quantity'] == '1' else 'scoops'
+
+        curr_body = body.format(**values)
+
+        email_contents.append(EmailContent(
+            email=values['email'],
+            body=curr_body
+        ))
 
     return email_contents
