@@ -7,6 +7,7 @@ email_details/*
 writer/cmake-build-debug
 email_sender.log
 sender/__pycache__
+chatbot/__pycache__
 
 events/*
 !events/example
@@ -17,6 +18,7 @@ successful_emails.xlsx
 test.py
 
 .env
+chatbot.log
 
 .DS_Store
 *.idea
