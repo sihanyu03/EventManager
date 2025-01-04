@@ -16,6 +16,8 @@ successful_emails.xlsx
 
 test.py
 
+.env
+
 .DS_Store
 *.idea
 
