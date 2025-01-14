@@ -1,19 +1,19 @@
 import logging
 import os
 from typing import Any
-import yaml
 import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Database:
-    def __init__(self, logger: logging.Logger, cols: list[str], project_path: str, table_name: str, grouping_requirement: str):
+    def __init__(self, logger: logging.Logger, cols: list[str], table_name: str, grouping_requirement: str):
         """
         :param logger: Reuse the same configured logger
         :param cols: Columns of the SQL table to be used in the emails
-        :param project_path: Path of the project directory
         :param table_name: Name of the SQL table, used to retrieve table size
         """
-        db_details = self.read_db_details(project_path)
 
         self.logger = logger
         self.cols = cols
@@ -26,10 +26,10 @@ class Database:
         self.idx = 0
         try:
             self.conn = psycopg2.connect(
-                host=db_details['host'],
-                database=db_details['name'],
-                user=db_details['user'],
-                password=db_details['password']
+                host=os.getenv('SQL_HOST'),
+                database=os.getenv('SQL_DATABASE'),
+                user=os.getenv('SQL_USER'),
+                password=os.getenv('SQL_PASSWORD')
             )
         except psycopg2.OperationalError:
             raise RuntimeError('SQL table not found')
@@ -57,28 +57,6 @@ class Database:
             self.cur.close()
         if self.conn is not None:
             self.conn.close()
-
-    def read_db_details(self, project_path: str) -> dict[str, str]:
-        """
-        Read the details required from a yaml file to connect to the database: host, name, user, password
-        :param project_path: Path of the project directory
-        :return: Dictionary containing the details: host, name, user, password
-        """
-        try:
-            with open(os.path.join(project_path, 'database_details', 'database_details.yaml'), 'r') as file:
-                db_details = yaml.safe_load(file)
-        except FileNotFoundError:
-            self.stop()
-            raise FileNotFoundError('database_details.yaml file does not exist, emails not sent')
-        except yaml.YAMLError:
-            self.stop()
-            raise ValueError('Failed to decode database_details.yaml as a yaml file, emails not sent')
-
-        if set(db_details.keys()) != {'host', 'name', 'user', 'password'}:
-            self.stop()
-            raise ValueError('Database reading failed due to invalid format, emails not sent')
-
-        return db_details
 
     def get_len(self):
         """

@@ -26,7 +26,6 @@ def main():
         db = Database(
             logger=logger,
             cols=event_details['cols'],
-            project_path=project_path,
             table_name=event_details['table_name'],
             grouping_requirement=event_details['grouping_requirement']
         )

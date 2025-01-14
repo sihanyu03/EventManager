@@ -1,6 +1,14 @@
+import os
+
+from flask.cli import load_dotenv
+
 import utils
 import psycopg2
+
 from langchain_core.tools import tool
+from langgraph.types import interrupt
+
+load_dotenv()
 
 
 @tool
@@ -87,6 +95,10 @@ def correct_typo_emails(emails: list[str], table: str) -> str:
         logger.info(f'correct_typo_emails - Error: Table name invalid')
         return 'Invalid table name, all characters in the table have to be alphanumeric or the underscore _ character'
 
+    confirmation = interrupt(f"Are yous ure you want to correct the typo emails in the table '{table}'? (yes/no):")
+    if confirmation.lower() != 'yes':
+        return 'Typo correction was cancelled by human input'
+
     successful_emails = []
     failed_emails = []
     try:
@@ -129,6 +141,10 @@ def create_table(table: str, columns: list[str]):
         logger.error(f'create_table - Error: Column name(s) invalid')
         return 'Invalid column names, all characters must be alphanumeric or the underscore _ character'
 
+    confirmation = interrupt(f"Are you sure you want to create the table '{table}'? (yes/no):")
+    if confirmation.lower() != 'yes':
+        return 'Table creation was cancelled by the user'
+
     query = [f'CREATE TABLE {table} (id SERIAL PRIMARY KEY,'] + [
         f'{col} VARCHAR(255),' if col != 'email' else 'email VARCHAR(255) UNIQUE,' for col in columns
     ]
@@ -154,6 +170,10 @@ def delete_table(table: str):
     if not utils.check_sql_variable_validity(table):
         logger.info('delete_table - Error: Table name invalid')
         return 'Invalid table name, all characters in the table have to be alphanumeric or the underscore _ character'
+
+    confirmation = interrupt(f"Are you sure you want to delete the table '{table}'? (yes/no):")
+    if confirmation.lower() != 'yes':
+        return 'Table deletion was cancelled by the user'
 
     try:
         sql_cur.execute(
@@ -188,6 +208,10 @@ def insert_into_sql_table(table: str, cols):
         logger.error('insert_into_sql_table - Error: Table name invalid')
         return 'Invalid table name, all characters in the table have to be alphanumeric or the underscore _ character'
 
+    confirmation = interrupt(f"Are you sure you want to insert into the table '{table}'? (yes/no):")
+    if confirmation.lower() != 'yes':
+        return 'Insertion was cancelled by the user'
+
     columns = ','.join(cols.keys())
     placeholders = ','.join(['%s'] * len(cols))
     values = tuple(cols.values())
@@ -206,7 +230,7 @@ def insert_into_sql_table(table: str, cols):
 
 @tool
 def retrieve_table_length(table: str):
-    """Given the name of a SQL table, retrieve the length of the table"""
+    """Given the name of a SQL table, retrieve the number of participants, which is the length of the table"""
     logger.info(f'retrieve_table_length - Called with parameter table={table}')
     if not utils.check_sql_variable_validity(table):
         logger.error(f'retrieve_table_length - Error: Table name invalid')
@@ -216,7 +240,7 @@ def retrieve_table_length(table: str):
         sql_cur.execute(f'SELECT COUNT(*) FROM {table}')
         result = sql_cur.fetchone()[0]
         logger.info(f'retrieve_table_length - Returned {result} as the length of the table {table}')
-        return f'The query gave the length of {table} as {result}'
+        return f'The number of participants or the length of the table {table} is {result}'
     except Exception as e:
         sql_conn.rollback()
         logger.error(f'retrieve_table_length - Error: {str(e)}')
@@ -244,6 +268,10 @@ def modify_element(table: str, identifier_column_name: str, identifier_value: st
         logger.error('modify_element - Error: Column name(s) invalid')
         return 'Invalid column names, all characters in the table have to be alphanumeric or underscode _ character'
 
+    confirmation = interrupt(f"Are you sure you want to modify the table '{table}'? (yes/no):")
+    if confirmation.lower() != 'yes':
+        return 'Table modification was cancelled by the user'
+
     try:
         sql_cur.execute(
             f'UPDATE {table} SET {column_to_be_modified} = %s WHERE {identifier_column_name} = %s RETURNING {column_to_be_modified}',
@@ -269,11 +297,12 @@ tools = [
     retrieve_table_length,
     modify_element
 ]
+
 sql_conn = psycopg2.connect(
-    host='localhost',
-    database='postgres',
-    user='sihanyu',
-    password='password'
+    host=os.getenv('SQL_HOST'),
+    database=os.getenv('SQL_DATABASE'),
+    user=os.getenv('SQL_USER'),
+    password=os.getenv('SQL_PASSWORD')
 )
 sql_cur = sql_conn.cursor()
 

@@ -1,15 +1,14 @@
 from tools import tools
 
-import os
-
 from dotenv import load_dotenv
 
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, AIMessage
+from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
 
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.graph import StateGraph, MessagesState, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import Command
 
 
 def query_or_respond(state: MessagesState):
@@ -37,42 +36,49 @@ def generate(state: MessagesState):
     return {'messages': [response]}
 
 
-def stream_answer(query: str, thread_id: str):
-    for message, _ in graph.stream(
-        {'messages': [{'role': 'user', 'content': query}]},
-        config={'configurable': {'thread_id': thread_id}},
-        stream_mode='messages'
-    ):
-        if isinstance(message, AIMessage):
-            print(message.content, end='')
-    print()
-
-
 load_dotenv()
-API_KEY = os.getenv('OPENAI_API_KEY')
 
-model = ChatOpenAI(model='gpt-4o-mini', openai_api_key=API_KEY)
+model = ChatOpenAI(model='gpt-4o-mini')
 
-graph_builder = StateGraph(MessagesState)
-graph_builder.add_node(query_or_respond)
-graph_builder.add_node(ToolNode(tools))
-graph_builder.add_node(generate)
+builder = StateGraph(MessagesState)
+builder.add_node(query_or_respond)
+builder.add_node(ToolNode(tools))
+builder.add_node(generate)
 
-graph_builder.set_entry_point('query_or_respond')
-graph_builder.add_conditional_edges('query_or_respond', tools_condition, {END: END, 'tools': 'tools'})
-graph_builder.add_edge('tools', 'generate')
-graph_builder.add_edge('generate', END)
+builder.set_entry_point('query_or_respond')
+builder.add_conditional_edges('query_or_respond', tools_condition, {END: END, 'tools': 'tools'})
+builder.add_edge('tools', 'generate')
+builder.add_edge('generate', END)
 
 checkpointer = MemorySaver()
-graph = graph_builder.compile(checkpointer=checkpointer)
+graph = builder.compile(checkpointer=checkpointer)
 
-thread_id = 'abc123'
+config = {'configurable': {'thread_id': '1'}}
 
 while True:
-    query = input('You: ')
+    snapshot = graph.get_state(config)
 
-    if query in ('exit', 'end', 'quit'):
-        break
+    if snapshot.tasks and snapshot.tasks[0].interrupts:
+        print(f'AI: {snapshot.tasks[0].interrupts[0].value}')
+        confirmation = input('You: ')
+        inp = Command(resume=confirmation)
+    else:
+        query = input('You: ')
+        if query in ('exit', 'end', 'quit'):
+            break
+        inp = {'messages': [HumanMessage(content=query)]}
 
-    print('AI: ', end='')
-    stream_answer(query, thread_id)
+    first = True
+    for message, _ in graph.stream(
+            inp,
+            config=config,
+            stream_mode='messages'
+    ):
+        if isinstance(message, AIMessage) and message.content:
+            if first:
+                first = False
+                print('AI: ', end='')
+            print(message.content, end='')
+
+    if not first:
+        print()

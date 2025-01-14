@@ -1,6 +1,3 @@
-database_details/*
-!database_details/database_details_example.yaml
-
 email_details/*
 !email_details/email_details_example.yaml
 
